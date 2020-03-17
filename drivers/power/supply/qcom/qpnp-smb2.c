@@ -194,6 +194,7 @@ struct smb2 {
 struct smb_charger *smbchg_dev;
 struct timespec last_jeita_time;
 struct wake_lock asus_chg_lock;
+bool demo_app_property_flag = 0;
 extern void smblib_asus_monitor_start(struct smb_charger *chg, int time);
 extern bool asus_get_prop_usb_present(struct smb_charger *chg);
 extern void asus_smblib_stay_awake(struct smb_charger *chg);
@@ -2505,6 +2506,40 @@ static void remove_proc_charger_limit(void)
 }
 
 /* Adapter ID start */
+static ssize_t demo_app_property_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t len)
+{
+	int tmp = 0;
+	tmp = buf[0] - 48;
+	CHG_DBG_E("%s: tmp = %d \n", __func__,tmp);//dgy add log
+	if (tmp == 0) {
+		demo_app_property_flag = false;
+		CHG_DBG("%s: demo_app_property_flag = 0\n", __func__);
+	} else if (tmp == 1) {
+		demo_app_property_flag = true;
+		CHG_DBG("%s: demo_app_property_flag = 1\n", __func__);
+	}
+	return len;
+}
+
+static ssize_t demo_app_property_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+       return sprintf(buf, "%d\n", demo_app_property_flag);
+}
+
+static DEVICE_ATTR(demo_app_property, 0664, demo_app_property_show, demo_app_property_store);
+
+static struct attribute *asus_smblib_attrs[] = {
+	&dev_attr_demo_app_property.attr,
+	NULL
+};
+
+static const struct attribute_group asus_smblib_attr_group = {
+	.attrs = asus_smblib_attrs,
+};
+/* Huaqin add for ZQL1650-26 by diganyun at 2018/02/06 end */
+
+/* Huaqin modify for ZQL1650-70 Identify Adapter ID by fangaijun at 2018/02/8 start */
 int32_t get_ID_vadc_voltage(void){
 	struct qpnp_vadc_chip *vadc_dev;
 	struct qpnp_vadc_result adc_result;
